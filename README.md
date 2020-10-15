@@ -1,0 +1,2 @@
+# tiratodo
+Script tiratodo
