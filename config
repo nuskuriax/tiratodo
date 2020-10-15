@@ -1,0 +1,3 @@
+TESTSSL=/home/toor/Descargas/testssl/testssl.sh
+DIRSEARCH=/home/toor/Descargas/dirsearch/dirsearch.py
+WORDLIST="$c"
