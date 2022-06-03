@@ -1,0 +1,157 @@
+#!/bin/bash
+#script tira todo
+echo "
+▄▄▄█████▓ ██▓ ██▀███   ▄▄▄         ▄▄▄█████▓ ▒█████  ▓█████▄  ▒█████  
+▓  ██▒ ▓▒▓██▒▓██ ▒ ██▒▒████▄       ▓  ██▒ ▓▒▒██▒  ██▒▒██▀ ██▌▒██▒  ██▒
+▒ ▓██░ ▒░▒██▒▓██ ░▄█ ▒▒██  ▀█▄     ▒ ▓██░ ▒░▒██░  ██▒░██   █▌▒██░  ██▒
+░ ▓██▓ ░ ░██░▒██▀▀█▄  ░██▄▄▄▄██    ░ ▓██▓ ░ ▒██   ██░░▓█▄   ▌▒██   ██░
+  ▒██▒ ░ ░██░░██▓ ▒██▒ ▓█   ▓██▒     ▒██▒ ░ ░ ████▓▒░░▒████▓ ░ ████▓▒░
+  ▒ ░░   ░▓  ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░     ▒ ░░   ░ ▒░▒░▒░  ▒▒▓  ▒ ░ ▒░▒░▒░ 
+    ░     ▒ ░  ░▒ ░ ▒░  ▒   ▒▒ ░       ░      ░ ▒ ▒░  ░ ▒  ▒   ░ ▒ ▒░ 
+  ░       ▒ ░  ░░   ░   ░   ▒        ░      ░ ░ ░ ▒   ░ ░  ░ ░ ░ ░ ▒  
+          ░     ░           ░  ░                ░ ░     ░        ░ ░  
+                                                      ░               
+Script tira todo, herramientas:
+NCAT
+NMAP
+SSLSCAN
+DIRSEARCH
+Consultas a crt.sh y certspotter
+
+Nuskuriax"
+source config
+#if [ -z $TESTSSL ]
+#	then 
+#	echo "Poner path de testssl"
+#	read a
+#	sed -i '1s/.*/TESTSSL="$a"/' config
+#	$TESTSSL=$a
+#fi
+#if [ -z $DIRSEARCH ]
+#	then 
+#	echo "Poner path dirsearch"
+#	read b
+#	sed -i '2s/.*/DIRSEARCH="$b"/' config
+#	$DIRSEARCH=$b
+#fi
+opcion=0
+while getopts t:h option
+	do
+		case "${option}"
+		in
+		t) TARGET=${OPTARG};;
+		h) HELP=${OPTARG};;
+		esac
+	done
+name=$(date '+%Y-%m-%d')
+$EXT="html,jsp,php,asp,wsdl,xml,mdb,aspx,docx"
+if [ -z $TARGET ]
+	then
+	echo "Especificar target con -t"
+	echo "Ejemplo: tiratodo -t example.com"
+else
+	while [ $opcion -lt 1 ] || [ $opcion -gt 3 ]
+	do
+		echo "Elegir opción de diccionario"
+		echo "1 - Diccionario small"
+		echo "2 - Diccionario medio"
+		echo "3 - Diccionario grande"
+		read opcion
+		case $opcion in
+			1)
+				WORDLIST=/usr/share/wordlists/dirb/small.txt
+			;;
+			2)
+				WORDLIST=/usr/share/wordlists/dirb/common.txt
+			;;
+			3)
+				WORDLIST=/usr/share/wordlists/dirb/big.txt
+			;;
+		esac
+	done
+	echo "poner extenciones separadas por comas (php,html,jsp,etc) sino mandar enter y usar por defecto"
+	read exte
+	if [ -z $exte ]
+		then
+			echo "se usan extenciones por defecto"
+		else
+			EXT=$exte
+	fi
+	if [[ $TARGET == https* ]]
+	then
+		TARGET2=${TARGET/"https://"/}
+		TARGET2=${TARGET2%/*}
+	elif [[ $TARGET == http* ]]
+	then
+		TARGET2=${TARGET/"http://"/}
+		TARGET2=${TARGET2%/*}
+	else
+		TARGET2=$TARGET
+		TARGET2=${TARGET2%/*}
+		TARGET=https://$TARGET
+	fi
+	printf "<html>" > repo
+	printf "<head><title>REPORTE $TARGET2</title></head></br>" >> repo
+	echo "<body>
+	<style>h1	{color: green; background-color: black; font-family: verdana; border-style: double; border-width: 0 100% 0 0; margin: -30px 0 0 0; text-align: center}
+	body	{font-size: 16}
+	b	{color: red ; font-size: 16 ; font-family: verdana}
+	</style><h1>REPORTE $TARGET2 $name</h1></br>" >> repo
+	printf "</br>" >> repo
+	echo '<b>############################################BANNER####################################################</b>' >> repo
+	printf "<pre>......................HEAD......................</pre></br><textarea>" >> repo
+	nc $TARGET2 | HEAD / HTTP/1.1 >> ban
+	sed -i 's/</&lt;/g' ban
+	sed -i 's/</\&/g' ban
+	cat ban >> repo
+	rm ban
+	printf "</textarea></br></br><pre>" >> repo
+	printf "...........................OPTIONS...................</pre></br><textarea>" >> repo
+	GET -m OPTIONS $TARGET2 HTTP/1.1 >> banner
+	sed -i 's/</&lt;/g' banner
+	sed -i 's/</\&/g' banner
+	cat banner >> repo
+	rm banner
+	printf "</textarea></br>" >> repo
+	echo "Banners juntados"
+	printf "</br>" >> repo
+	echo '<b>############################################DNS#######################################################</b>' >> repo 
+	printf "</br><pre>" >> repo
+	echo "Dominios/Subdominios encontrados:" >> repo
+	curl -s https://crt.sh/?q=%.$TARGET  | sed 's/<\/\?[^>]\+>//g' | grep $TARGET | sort -u > dns
+	curl -s https://certspotter.com/api/v0/certs\?domain\=$TARGET2 | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' >> dns
+	cat ./dns | sort -u | grep -v crt.sh | grep -v "Identity LIKE" >> repo
+	rm dns 
+	printf "</pre></br>" >> repo
+	echo "Escaneos DNS Finalizados"
+	echo '<b>############################################NMAP######################################################</b></br>' >> repo
+	printf "<pre></br>.............................TCP.................................</br></br>" >> repo
+	nmap -Pn -sSCV --top-ports 100 -O $TARGET2 --open >> repo
+	echo "</br>.............................UDP.................................</br>" >> repo
+	nmap -Pn -sU --top-ports 20 $TARGET2 --open >> repo
+		printf "</pre></br>" >> repo
+	echo "NMAP finalizado"
+#	echo "<b>###########################################WAF########################################################</b></br>" >> repo
+#	echo "<pre>" >> repo
+#	wafw00f $TARGET -a >> waf
+#	cat waf | grep -A 17 $TARGET2 >> repo
+#	rm waf
+#	echo "</pre></br>" >> repo
+#	echo "Descubrimiento de WAF finalizado"
+	echo '<b>############################################SSL#######################################################</b></br>' >> repo
+	printf "<pre></br>.............................SSLSCAN.............................</br></br>" >> repo
+	sslscan --no-colour --no-fallback --no-heartbleed --no-renegotiation $TARGET2 >> repo
+#	printf "</br>.............................TESTSSL.............................</pre></br><pre charset="ANSI">" >> repo
+#	$TESTSSL -I -T -B -O -W -A -L -F -J -4 --protocols -E --quiet --fast --sneaky --color 0 $TARGET2>> repo
+	printf "</pre>" >> repo
+	echo "Escaneos SSL finalizados"
+	echo '<b>############################################DIRSEARCH#################################################</b>' >> repo
+	printf "</br><pre>" >> repo
+	dirsearch -u $TARGET -e $EXT -t 20 --suppress-empty -F -f -w $WORDLIST --plain-text-report=dir
+	cat dir >> repo
+	rm dir
+	printf "</pre></body>" >> repo
+	printf "</html>" >> repo
+	echo "Finalizado"
+	mv repo "$TARGET2-$name.html"
+fi
