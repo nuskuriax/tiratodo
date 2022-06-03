@@ -140,7 +140,7 @@ else
 #	echo "Descubrimiento de WAF finalizado"
 	echo '<b>############################################SSL#######################################################</b></br>' >> repo
 	printf "<pre></br>.............................SSLSCAN.............................</br></br>" >> repo
-	/home/admin/sslscan/sslscan --no-colour --no-fallback --no-heartbleed --no-renegotiation $TARGET2 >> repo
+	sudo /home/admin/sslscan/sslscan --no-colour --no-fallback --no-heartbleed --no-renegotiation $TARGET2 >> repo
 #	printf "</br>.............................TESTSSL.............................</pre></br><pre charset="ANSI">" >> repo
 #	$TESTSSL -I -T -B -O -W -A -L -F -J -4 --protocols -E --quiet --fast --sneaky --color 0 $TARGET2>> repo
 	printf "</pre>" >> repo
