@@ -147,7 +147,7 @@ else
 	echo "Escaneos SSL finalizados"
 	echo '<b>############################################DIRSEARCH#################################################</b>' >> repo
 	printf "</br><pre>" >> repo
-	dirsearch -u $TARGET -e $EXT -t 20 --suppress-empty -F -f -w $WORDLIST --plain-text-report=dir
+	dirsearch -u $TARGET -e $EXT -t 20 -R 1 -F -f --exclude-sizes=0 -x 302,301 -w $WORDLIST --plain-text-report=dir
 	cat dir >> repo
 	rm dir
 	printf "</pre></body>" >> repo
