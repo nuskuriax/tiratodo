@@ -1,0 +1,7 @@
+#!/bin/bash
+File=targets
+Lines=$(cat $File)
+for Line in $Lines
+do
+	sudo ./tiratodo2 -t $Line
+done
