@@ -3,15 +3,18 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import sys
+
+File=str(sys.argv[1])
 
 username = "mail"
 password = "pass"
 mail_from = "mail"
 mail_to = "mail"
-mail_subject = "reporte"
+mail_subject = "Reporte de seguridad"
 mail_body = "Revisar reporte adjunto"
-mail_attachment= ".zip"
-mail_attachment_name= ".zip"
+mail_attachment= File
+mail_attachment_name= File
 
 mimemsg = MIMEMultipart()
 mimemsg['From']=mail_from
